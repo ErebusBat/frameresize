@@ -5,7 +5,6 @@ import (
 	"image/jpeg"
 	"log"
 	"os"
-	"path"
 	"sync/atomic"
 
 	"github.com/nfnt/resize"
@@ -18,19 +17,28 @@ func (pf *Photoframe) resizeFiles() {
 		file := <-pf.chImages
 		pf.wgProcess.Add(1)
 
-		resizeImage(file, pf.DestRoot, pf.Width, pf.Height)
+		dstImage := pf.NewFileName(file)
+		if fileExists(dstImage) {
+			fmt.Printf("SKIPping %s => %s\n", file.Name, dstImage)
+		} else {
+			fmt.Printf("Resizing %s => %s\n", file.Name, dstImage)
+			resizeImage(file.FullPath(), dstImage, pf.Width, pf.Height)
+		}
 
 		pf.wgProcess.Done()
 		atomic.AddUint32(&pf.FilesResized, 1)
 	}
 }
 
-func resizeImage(srcImage ImageInfo, dstPath string, width, height uint) {
-	dstImage := fmt.Sprintf("%s_%dx%d.jpg", srcImage.Name, width, height)
-	dstImage = path.Join(dstPath, dstImage)
-	fmt.Printf("Resizing %s\n", dstImage)
+func fileExists(filename string) bool {
+	if _, err := os.Stat(filename); os.IsNotExist(err) {
+		return false
+	}
+	return true
+}
 
-	file, err := os.Open(srcImage.FullPath())
+func resizeImage(srcImage string, dstImage string, width, height uint) {
+	file, err := os.Open(srcImage)
 	if err != nil {
 		log.Fatal(err)
 	}

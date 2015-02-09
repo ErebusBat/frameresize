@@ -1,6 +1,8 @@
 package frameresize
 
 import (
+	"crypto/sha1"
+	"fmt"
 	"io/ioutil"
 	"path"
 	"path/filepath"
@@ -79,4 +81,18 @@ func (pf *Photoframe) scanDir(srcPath string) (err error) {
 	// Clean up
 	pf.wgProcess.Done()
 	return
+}
+
+func (pf *Photoframe) NewFileName(image ImageInfo) string {
+	// Hash output serves as a randomizer and name conflict resolution
+	hashOutput := true
+
+	dstImage := fmt.Sprintf("%s_%dx%d.jpg", image.Name, pf.Width, pf.Height)
+	if hashOutput == true {
+		hash := sha1.New()
+		hash.Write([]byte(image.Path + "/"))
+		hash.Write([]byte(dstImage))
+		dstImage = fmt.Sprintf("%x.jpg", hash.Sum(nil))
+	}
+	return path.Join(pf.DestRoot, dstImage)
 }
