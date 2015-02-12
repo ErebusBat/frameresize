@@ -4,6 +4,7 @@ import (
 	"crypto/sha1"
 	"fmt"
 	"io/ioutil"
+	"os"
 	"path"
 	"path/filepath"
 	"runtime"
@@ -73,7 +74,7 @@ func (pf *Photoframe) scanDir(srcPath string) (err error) {
 			}
 		} else {
 			if IMAGE_EXT.Contains(filepath.Ext(upper_name)) {
-				pf.chImages <- NewImageInfoFromFileInfo(srcPath, r)
+				go pf.postImageToProcess(srcPath, r)
 			}
 		}
 	}
@@ -81,6 +82,10 @@ func (pf *Photoframe) scanDir(srcPath string) (err error) {
 	// Clean up
 	pf.wgProcess.Done()
 	return
+}
+
+func (pf *Photoframe) postImageToProcess(srcPath string, r os.FileInfo) {
+	pf.chImages <- NewImageInfoFromFileInfo(srcPath, r)
 }
 
 func (pf *Photoframe) NewFileName(image ImageInfo) string {
