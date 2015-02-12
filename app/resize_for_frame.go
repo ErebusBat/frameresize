@@ -2,13 +2,17 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"runtime"
 
 	. "github.com/ErebusBat/frameresize"
 )
 
 func main() {
-	runtime.GOMAXPROCS(runtime.NumCPU())
+	if os.Getenv("GOMAXPROCS") == "" {
+		fmt.Println("$GOMAXPROCS undefined... turning on AutoFAST(tm)")
+		runtime.GOMAXPROCS(runtime.NumCPU())
+	}
 
 	app := NewPhotoframe(
 		"/tmp/photoframe",
